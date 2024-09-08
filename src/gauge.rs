@@ -20,7 +20,7 @@ pub struct Gauge {
 }
 
 impl Gauge {
-    // Create a new instance of the Gauge
+    // Create a new instance of the Gauge.
     pub fn new() -> Self {
         Gauge {
             current_value: 0.0,

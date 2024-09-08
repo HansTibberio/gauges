@@ -5,7 +5,7 @@ mod gauge;
 use gauge::Gauge;
 
 fn main() {
-    // Create a new Piston window for the RPM gauge
+    // Create a new Piston window for the RPM gauge.
     let mut window: PistonWindow = WindowSettings::new("RPM Gauge", [400, 400])
         .exit_on_esc(true)
         .build()
