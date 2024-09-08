@@ -3,24 +3,24 @@ use piston_window::*;
 use std::f64::consts::PI;
 
 // General constants
-const MAX_VALUE: f64 = 9000.0; // Maximum RPM value
-const DANGER_THRESHOLD: i32 = 6000; // RPM threshold for danger
+const MAX_VALUE: f64 = 9000.0; // Maximum value
+const DANGER_THRESHOLD: i32 = 6000; // Value threshold for danger
 const GAUGE_RADIUS: f64 = 150.0; // Radius of the gauge
-const VALUE_STEP: f64 = 50.0; // Incremental step for RPM increase
-const DECAY_RATE: f64 = 20.0; // Rate at which RPM decreases
+const VALUE_STEP: f64 = 50.0; // Incremental step for value increase
+const DECAY_RATE: f64 = 20.0; // Rate at which value decreases
 const GAUGE_CENTER: f64 = 200.0; // Center position of the gauge
 pub struct Gauge {
-    current_value: f64,    // Current RPM value
-    max_value: f64,        // Maximum RPM value
-    danger_threshold: i32, // RPM threshold for danger
+    current_value: f64,    // Current value
+    max_value: f64,        // Maximum value
+    danger_threshold: i32, // Value threshold for danger
     radius: f64,           // Radius of the gauge
     center: f64,           // Center position of the gauge
-    value_step: f64,       // Step for RPM increment
-    decay_rate: f64,       // Rate of RPM decay
+    value_step: f64,       // Step for value increment
+    decay_rate: f64,       // Rate of value decay
 }
 
 impl Gauge {
-    // Create a new instance of the Gauge.
+    // Create a new instance of the Gauge
     pub fn new() -> Self {
         Gauge {
             current_value: 0.0,
@@ -33,15 +33,15 @@ impl Gauge {
         }
     }
 
-    // Method to update the RPM
-    pub fn update_rpm(&mut self, key_up_pressed: bool, dt: f64) {
+    // Method to update the value
+    pub fn update(&mut self, key_up_pressed: bool, dt: f64) {
         if key_up_pressed && self.current_value < self.max_value {
-            self.current_value += self.value_step * dt * 100.0; // Increase RPM
+            self.current_value += self.value_step * dt * 100.0; // Increase value
             if self.current_value > self.max_value {
                 self.current_value = self.max_value; // Clamp to max value
             }
         } else if !key_up_pressed && self.current_value > 0.0 {
-            self.current_value -= self.decay_rate * dt * 100.0; // Decrease RPM
+            self.current_value -= self.decay_rate * dt * 100.0; // Decrease value
             if self.current_value < 0.0 {
                 self.current_value = 0.0; // Clamp to zero
             }
@@ -49,8 +49,7 @@ impl Gauge {
     }
 
     // Method to draw the gauge
-    pub fn draw(&self, context: Context, graphics: &mut G2d, glyphs: &mut Glyphs) {
-        // Dibuja el gauge (aproximación de un arco con 100 líneas)
+    pub fn render(&self, context: Context, graphics: &mut G2d, glyphs: &mut Glyphs) {
         // Draw the gauge (approximation of an arc with 100 lines)
         let start_angle: f64 = 3.0 * PI / 4.0; // Start angle of the gauge
         let end_angle: f64 = 9.0 * PI / 4.0; // End angle of the gauge
@@ -73,38 +72,38 @@ impl Gauge {
 
             line(
                 [0.0, 0.0, 0.0, 1.0], // Black color
-                2.0,                  // Line thickness
+                2.0,                 // Line thickness
                 [x1, y1, x2, y2],
                 context.transform,
                 graphics,
             );
         }
 
-        // Draw RPM ticks
-        for rpm in (0..=self.max_value as i32).step_by(100) {
-            let rpm_percentage: f64 = rpm as f64 / self.max_value; // RPM percentage of max value
-            let angle: f64 = start_angle + rpm_percentage * (end_angle - start_angle);
+        // Draw value ticks
+        for value in (0..=self.max_value as i32).step_by(100) {
+            let value_percentage: f64 = value as f64 / self.max_value; // value percentage of max value
+            let angle: f64 = start_angle + value_percentage * (end_angle - start_angle);
 
             let outer_x: f64 = self.center + self.radius * angle.cos();
             let outer_y: f64 = self.center + self.radius * angle.sin();
 
-            // Determine line size based on RPM value
-            let line_length: f64 = if rpm % 1000 == 0 {
+            // Determine line size based on value
+            let line_length: f64 = if value % 1000 == 0 {
                 20.0 // Long tick for multiples of 1000
-            } else if rpm % 500 == 0 {
+            } else if value % 500 == 0 {
                 10.0 // Medium tick for multiples of 500
             } else {
                 5.0 // Short tick for multiples of 100
             };
 
             // Determine line thickness
-            let line_radius: f64 = if rpm % 1000 == 0 { 2.0 } else { 1.0 };
+            let line_radius: f64 = if value % 1000 == 0 { 2.0 } else { 1.0 };
 
             let inner_x: f64 = self.center + (self.radius - line_length) * angle.cos();
             let inner_y: f64 = self.center + (self.radius - line_length) * angle.sin();
 
-            // Change color to red if RPM is above the danger threshold
-            let line_color: [f32; 4] = if rpm >= self.danger_threshold {
+            // Change color to red if value is above the danger threshold
+            let line_color: [f32; 4] = if value >= self.danger_threshold {
                 [1.0, 0.0, 0.0, 1.0] // Red color
             } else {
                 [0.0, 0.0, 0.0, 1.0] // Black color
@@ -119,14 +118,14 @@ impl Gauge {
                 graphics,
             );
 
-            // Draw RPM values (only for multiples of 1000)
-            if rpm % 1000 == 0 {
+            // Draw values (only for multiples of 1000)
+            if value % 1000 == 0 {
                 let text_x: f64 = self.center + (self.radius - 30.0) * angle.cos();
                 let text_y: f64 = self.center + (self.radius - 30.0) * angle.sin();
-                let rpm_text: String = format!("{}", rpm / 1000);
+                let value_text: String = format!("{}", value / 1000);
 
-                // Change text color if RPM exceeds danger zone
-                let text_color: [f32; 4] = if rpm >= self.danger_threshold {
+                // Change text color if value exceeds danger zone
+                let text_color: [f32; 4] = if value >= self.danger_threshold {
                     [1.0, 0.0, 0.0, 1.0] // Red color
                 } else {
                     [0.0, 0.0, 0.0, 1.0] // Black color
@@ -134,14 +133,14 @@ impl Gauge {
 
                 let transform: [[f64; 3]; 2] = context.transform.trans(text_x - 5.0, text_y + 5.0);
                 text::Text::new_color(text_color, 16)
-                    .draw(&rpm_text, glyphs, &context.draw_state, transform, graphics)
+                    .draw(&value_text, glyphs, &context.draw_state, transform, graphics)
                     .unwrap();
             }
         }
 
         // Calculate needle angle
-        let rpm_percentage: f64 = self.current_value / self.max_value;
-        let needle_angle: f64 = start_angle + rpm_percentage * (end_angle - start_angle);
+        let value_percentage: f64 = self.current_value / self.max_value;
+        let needle_angle: f64 = start_angle + value_percentage * (end_angle - start_angle);
 
         // Draw the needle
         let (needle_x, needle_y) = (
@@ -186,8 +185,8 @@ impl Gauge {
             graphics,
         );
 
-        // Draw the current RPM text
-        let text: String = format!("RPM: {:.0}", self.current_value);
+        // Draw the current value text
+        let text: String = format!("value: {:.0}", self.current_value);
         let transform: [[f64; 3]; 2] = context.transform.trans(150.0, 350.0);
         text::Text::new_color([0.0, 0.0, 0.0, 1.0], 18)
             .draw(&text, glyphs, &context.draw_state, transform, graphics)
